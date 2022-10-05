@@ -1,3 +1,4 @@
+import os
 import sys
 import re
 
@@ -11,16 +12,18 @@ from firebase_admin import credentials, firestore
 
 from http.server import BaseHTTPRequestHandler
 
+# get environment variable (stored under vercel project setting)
+forTUNE_data = json.loads(os.environ.get("forTUNE_cookies"))
+firebase_cred = json.loads(os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY"))
 
-cookies = {}
-user_agent = ""
-headers = {}
+cookies = forTUNE_data["cookies"]
+user_agent = forTUNE_data["user_agent"]
+headers = forTUNE_data["headers"]
 
 SITEURL = "https://fortunemusic.jp"
 BASEURL = "https://fortunemusic.jp/nogizaka_202208/"
 CDNUM = 30
 CDTYPE = "Single"
-
 
 NAMESDICT = {
     "秋元真夏": "Akimoto Manatsu",
@@ -271,7 +274,7 @@ def mainPart():
     #############################
 
     if not firebase_admin._apps:
-        cred = credentials.Certificate("ngzkhandshake-adminAccount.json")
+        cred = credentials.Certificate(firebase_cred)
         firebase_admin.initialize_app(cred)
     db = firestore.client()
     tables_ref = db.collection("tables")
