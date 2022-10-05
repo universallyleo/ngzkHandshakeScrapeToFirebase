@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 import firebase_admin
 from firebase_admin import credentials, firestore
 
+# to convert program to an API so vercel can run it
 from http.server import BaseHTTPRequestHandler
 
 # get environment variable (stored under vercel project setting)
