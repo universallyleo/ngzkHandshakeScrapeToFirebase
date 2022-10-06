@@ -236,10 +236,11 @@ def updateMBTable(old, new, newentry):
 def mainPart():
     log = ""
 
-    config = json.load(iopen("forTUNE-cookies.json", encoding="utf-8"))
-    headers = config["headers"]
-    user_agent = config["user_agent"]
-    cookies = config["cookies"]
+    # For testing locally
+    # config = json.load(iopen("forTUNE-cookies.json", encoding="utf-8"))
+    # headers = config["headers"]
+    # user_agent = config["user_agent"]
+    # cookies = config["cookies"]
     #############################
     # scrape participating mb
     #############################
