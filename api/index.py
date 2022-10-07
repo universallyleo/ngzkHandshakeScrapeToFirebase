@@ -151,18 +151,18 @@ def mbListScrapeFromTable(soup):
 #     mblist will be updated after running this
 #############################
 def ScrapeTables(link, mblist):
+    scrapeLog = ""
     link = SITEURL + link
     scrappage = requests.get(link, cookies=cookies, headers=headers)
     if scrappage.status_code != 200:
-        print("[red]Error[/red]:")
-        print(scrappage.status_code)
-        print(f"Page ([blue]{link}[/blue]) request failed")
-        sys.exit()
+        scrapeLog += f"Error: {scrappage.status_code}\n"
+        scrapeLog += f"URL {link} request failed\n"
+        return scrapeLog
     soup = BeautifulSoup(scrappage.text, "html.parser")
 
     if len(soup.select("form.login_form")) > 0:
-        print("Need login")
-        sys.exit()
+        scrapeLog += "Login needed\n"
+        return scrapeLog
 
     # if len(mblist) == 0:  # scrape member info from table
     #     mblist = mbListScrapeFromTable(soup)
@@ -183,11 +183,11 @@ def ScrapeTables(link, mblist):
             date = findDate(
                 receptionEnded.find_next_sibling(text=True)
             )  # get text not enclosed in tag
-            print(f"Reception ended: {date}")
+            scrapeLog += f"Reception ended: {date}\n"
             continue
         else:
             date = findDate(itm.find("button", class_="tglHook").string)
-            print(f"Scrape day: {date}")
+            scrapeLog += f"**** Scrape day: {date}\n"
             for target in itm.select("table tbody tr"):
                 scrappedName = target.find("th").string
 
@@ -202,18 +202,14 @@ def ScrapeTables(link, mblist):
                         row.append("SOLD")
                     elif len(x.contents) == 1:
                         if next(x.stripped_strings) != "---":
-                            print(
-                                f"Scraping Contents (len={len(x.contents)}) from {scrappedName}: {x.contents[0]}"
-                            )
+                            scrapeLog += f"Scraping Contents (len={len(x.contents)}) from {scrappedName}: {x.contents[0]}"
                         else:
                             row.append("x")
                     else:
-                        print(
-                            f"Scraping Contents (len={len(x.contents)}) from {scrappedName}: {x.contents[0]}"
-                        )
+                        scrapeLog += f"Scraping Contents (len={len(x.contents)}) from {scrappedName}: {x.contents[0]}"
                 # print(f"{scrappedName}: {row}")
                 mblist[NAMESDICT[scrappedName]].append({"date": date, "soldout": row})
-    return mblist
+    return (mblist, scrapeLog)
 
 
 ####################################################
@@ -247,7 +243,7 @@ def mainPart():
     scrappage = requests.get(BASEURL)
     if scrappage.status_code != 200:
         log += f"[red]Error[/red]:\n{scrappage.status_code}\nPage ({BASEURL}) request failed"
-        sys.exit()
+        return log
 
     soup = BeautifulSoup(scrappage.text, "html.parser")
     anchor = soup.find("span", class_="bold", string="【参加メンバー】")
@@ -263,13 +259,22 @@ def mainPart():
         log += f"Found link to table ({tablelink})\n"
     else:
         log += "Cannot find table to scrape.❌\nAbort process."
-        sys.exit()
+        return log
 
-    newtb = ScrapeTables(tablelink, participants)
+    txt = [x for x in soup.find("span", class_="badgeStatus _accept").parent.strings][1]
+    # sample:  txt = '第11次受付'
+    thisDraw = int(re.search("\d+", txt).group(0))  # return 11 in the above example
+    log += f"Draw in reception: {thisDraw}\n"
+
+    # Scrpae
+    (newtb, scrapeLog) = ScrapeTables(tablelink, participants)
+    log += "********* Scrape Log *********"
+    log += scrapeLog
+    log += "********* ---------- *********\n"
 
     if newtb == 0:
         log += "Table empty.❌\nAbort process."
-        sys.exit()
+        return log
 
     #############################
     # initialise firebase
@@ -289,12 +294,16 @@ def mainPart():
     cd = queryres.to_dict()
     cd_ref = queryres.reference
 
-    #############################
-    # read existed record and merge with new
-    #############################
     tabledata = cd["table"]
     dates = cd["meetDates"]
     newlastdraw = cd["lastDraw"] + 1
+    if newlastdraw > thisDraw:
+        log += f"Already scraped draw {thisDraw}\nAbort process"
+        return log
+
+    #############################
+    # read existed record and merge with new
+    #############################
     for mb in tabledata:
         old = [
             {
