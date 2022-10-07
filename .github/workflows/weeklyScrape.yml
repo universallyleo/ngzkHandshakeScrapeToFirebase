@@ -1,0 +1,21 @@
+# This is a basic workflow that is manually triggered
+
+name: Scrape weekly
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+# on cron job: see https://crontab.guru/#1_5_*_*_THU
+on:
+  schedule:
+    - cron: 1 5 * * THU
+
+jobs:
+  scrape:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Runs a single command using the runners shell
+    - name: get request
+      run: curl http://ngzkhandshakescrape.vercel.app/api/
