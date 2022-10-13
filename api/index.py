@@ -261,10 +261,13 @@ def mainPart():
         log += "Cannot find table to scrape.❌\nAbort process."
         return log
 
-    txt = [x for x in soup.find("span", class_="badgeStatus _accept").parent.strings][1]
+    txt = [
+        x
+        for x in soup.find("span", class_="badgeStatus _accept").parent.stripped_strings
+    ][1]
     # sample:  txt = '第11次受付'
-    thisDraw = int(re.search("\d+", txt).group(0))  # return 11 in the above example
-    log += f"Draw in reception: {thisDraw}\n"
+    thisDraw = int(re.search("\d+", txt).group(0))
+    print(thisDraw)
 
     # Scrpae
     (newtb, scrapeLog) = ScrapeTables(tablelink, participants)
