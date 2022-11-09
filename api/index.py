@@ -22,7 +22,7 @@ user_agent = forTUNE_data["user_agent"]
 headers = forTUNE_data["headers"]
 
 SITEURL = "https://fortunemusic.jp"
-BASEURL = "https://fortunemusic.jp/nogizaka_202208/"
+BASEURL = "https://fortunemusic.jp/nogizaka_202212/"
 CDNUM = 30
 CDTYPE = "Single"
 
